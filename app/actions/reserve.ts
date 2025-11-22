@@ -1,12 +1,9 @@
 "use server";
-
 import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 export async function reserveWish(wishId: string, reservedBy: string, listOwnerId: string) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   if (!reservedBy || reservedBy.trim() === "") {
     return { error: "Please enter your name" };
@@ -29,8 +26,7 @@ export async function reserveWish(wishId: string, reservedBy: string, listOwnerI
 }
 
 export async function unreserveWish(wishId: string, listOwnerId: string) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   // Remove the reservation
   const { error } = await supabase

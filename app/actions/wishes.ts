@@ -1,12 +1,10 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 export async function addWish(formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -42,8 +40,7 @@ export async function addWish(formData: FormData) {
 }
 
 export async function updateWish(wishId: string, formData: FormData) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -62,7 +59,7 @@ export async function updateWish(wishId: string, formData: FormData) {
     return { error: "Gift name is required" };
   }
 
-  const { error } = await supabase
+  const { error } = await (await supabase)
     .from("wishes")
     .update({
       name: name.trim(),
@@ -82,8 +79,7 @@ export async function updateWish(wishId: string, formData: FormData) {
 }
 
 export async function deleteWish(wishId: string) {
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   const {
     data: { user },
