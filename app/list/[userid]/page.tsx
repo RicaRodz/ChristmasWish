@@ -1,5 +1,4 @@
 import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import PublicWishList from "@/components/PublicWishList";
 
@@ -9,8 +8,7 @@ type PageProps = {
 
 export default async function PublicListPage({ params }: PageProps) {
   const { userId } = await params;
-  const cookieStore = cookies();
-  const supabase = createClient(cookieStore);
+  const supabase = await createClient();
 
   // Get the list owner's email
   const { data: userData } = await supabase.auth.admin.getUserById(userId);
