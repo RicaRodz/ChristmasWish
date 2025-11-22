@@ -1,5 +1,4 @@
 "use client";
-
 import { signOut } from "@/app/actions/auth";
 import WishList from "@/components/WishList";
 

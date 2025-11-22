@@ -1,20 +1,18 @@
 'use client';
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient, SupabaseClient, User, AuthResponse, AuthTokenResponse, AuthError } from '@supabase/supabase-js';
+// 1. Keep the Types from supabase-js
+import { SupabaseClient, User, AuthResponse, AuthTokenResponse, AuthError } from '@supabase/supabase-js';
+// 2. Import the client creator from YOUR utility file
+import { createClient } from '@/utils/supabase/client';
 
 // --- Type Definitions ---
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  // signUp returns AuthResponse (contains data.user, data.session, error)
   signUp: (email: string, password: string) => Promise<AuthResponse>;
-  
-  // signInWithPassword returns AuthTokenResponse (contains data.user, data.session, error)
   signIn: (email: string, password: string) => Promise<AuthTokenResponse>;
-  
-  // signOut returns a simple object with an error property
   signOut: () => Promise<{ error: AuthError | null }>;
-  
   supabase: SupabaseClient;
 }
 
@@ -24,26 +22,16 @@ interface AuthProviderProps {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- Supabase Client Initialization ---
-const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-// --- Custom Hook ---
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
 // --- Auth Provider Component ---
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  // 3. Initialize the Supabase client using your custom function
+  // We use useState to ensure the client is created only once per lifecycle
+  const [supabase] = useState(() => createClient());
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // --- Auth API Methods ---
   const signUp = (email: string, password: string) => {
     return supabase.auth.signUp({ email, password });
   };
@@ -56,6 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return supabase.auth.signOut();
   };
 
+  // --- Session Listener ---
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -75,7 +64,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]); // Added supabase dependency
 
   const value: AuthContextType = {
     currentUser,
@@ -91,4 +80,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// --- Custom Hook ---
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
