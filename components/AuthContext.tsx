@@ -1,25 +1,32 @@
+'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User, AuthResponse, AuthTokenResponse, AuthError } from '@supabase/supabase-js';
 
 // --- Type Definitions ---
-
-// Define the shape of the data provided by the AuthContext
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<any>;
+  // signUp returns AuthResponse (contains data.user, data.session, error)
+  signUp: (email: string, password: string) => Promise<AuthResponse>;
+  
+  // signInWithPassword returns AuthTokenResponse (contains data.user, data.session, error)
+  signIn: (email: string, password: string) => Promise<AuthTokenResponse>;
+  
+  // signOut returns a simple object with an error property
+  signOut: () => Promise<{ error: AuthError | null }>;
+  
   supabase: SupabaseClient;
 }
 
-// Default value for context, using "as AuthContextType" for non-null assertion
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // --- Supabase Client Initialization ---
-// NOTE: Use your actual environment variables here.
-const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_PROJECT_URL'; 
-const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_PUBLIC_KEY'; 
+const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -33,11 +40,10 @@ export const useAuth = () => {
 };
 
 // --- Auth Provider Component ---
-export const AuthProvider: React.FC = ({ children }) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // --- Auth API Methods ---
   const signUp = (email: string, password: string) => {
     return supabase.auth.signUp({ email, password });
   };
@@ -49,10 +55,8 @@ export const AuthProvider: React.FC = ({ children }) => {
   const signOut = () => {
     return supabase.auth.signOut();
   };
-  
-  // --- Session Listener and Initial Check ---
+
   useEffect(() => {
-    // 1. Check initial session
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
@@ -60,18 +64,16 @@ export const AuthProvider: React.FC = ({ children }) => {
     };
 
     checkUser();
-    
-    // 2. Listen for real-time auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        // Update user state whenever the authentication status changes
         setCurrentUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
     return () => {
-      authListener?.unsubscribe(); // Cleanup the listener
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -81,7 +83,7 @@ export const AuthProvider: React.FC = ({ children }) => {
     signUp,
     signIn,
     signOut,
-    supabase, 
+    supabase,
   };
 
   return (

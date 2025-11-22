@@ -23,7 +23,7 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false });
 
   const shareableLink = `${process.env.NEXT_PUBLIC_SITE_URL}/list/${user.id}`;
-
+  console.log(shareableLink)
   return (
     <DashboardClient 
       wishes={wishes || []} 
