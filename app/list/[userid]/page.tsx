@@ -3,7 +3,6 @@ import { createAdminClient } from "@/utils/supabase/admin"; // Import the new ad
 import { notFound } from "next/navigation";
 import PublicWishList from "@/components/PublicWishList";
 
-// Helper to check if a string is a valid UUID
 const isValidUUID = (uuid: string) => {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return regex.test(uuid);
@@ -20,7 +19,6 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
-  // 1. Use Admin Client to fetch the USER (Metadata)
   // We need this because the Anon key can't see other users' emails
   const adminSupabase = createAdminClient();
   const { data: userData } = await adminSupabase.auth.admin.getUserById(userId);
