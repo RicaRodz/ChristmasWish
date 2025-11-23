@@ -2,22 +2,38 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import PublicWishList from "@/components/PublicWishList";
 
+// 1. Helper function to check if a string is a valid UUID
+const isValidUUID = (uuid: string) => {
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return regex.test(uuid);
+};
+
 type PageProps = {
   params: Promise<{ userId: string }>;
 };
 
 export default async function PublicListPage({ params }: PageProps) {
   const { userId } = await params;
+
+  // 2. IMMEDIATE CHECK: If it's not a UUID (like "favicon.ico"), return 404 immediately.
+  // This stops the code from reaching Supabase and crashing.
+  if (!isValidUUID(userId)) {
+    notFound();
+  }
+
   const supabase = await createClient();
 
   // Get the list owner's email
+  // NOTE: This uses auth.admin. If this returns null in production, 
+  // you might need a Service Role client (see note below).
   const { data: userData } = await supabase.auth.admin.getUserById(userId);
   
+  // If user doesn't exist, we can't show whose list it is
   if (!userData?.user) {
     notFound();
   }
 
-  // Fetch wishes but exclude reserved_by for public view
+  // Fetch wishes
   const { data: wishes, error } = await supabase
     .from("wishes")
     .select("id, name, link, notes, priority, reserved_by, created_at")
@@ -80,7 +96,8 @@ export default async function PublicListPage({ params }: PageProps) {
         <div className="mb-8 rounded-2xl bg-white/95 backdrop-blur p-8 shadow-2xl border-4 border-red-200 text-center">
           <h2 className="text-4xl font-bold text-red-800 mb-2 flex items-center justify-center gap-3">
             <span>🎅</span> 
-            {isOwnList ? "Your" : `${userData.user.email?.split('@')[0]}'s`} Christmas Wishlist
+            {/* Safe check for email existence */}
+            {isOwnList ? "Your" : `${userData.user.email?.split('@')[0] || "Friend"}'s`} Christmas Wishlist
             <span>🎁</span>
           </h2>
           <p className="text-gray-600 text-lg mt-2">
