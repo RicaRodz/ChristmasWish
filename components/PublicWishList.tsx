@@ -141,7 +141,7 @@ export default function PublicWishList({ wishes, isOwnList, listOwnerId }: Publi
                             placeholder="Enter your name"
                             value={reserverName}
                             onChange={(e) => setReserverName(e.target.value)}
-                            className="flex-1 rounded-lg border-2 border-green-300 px-4 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+                            className="flex-1 text-gray-900 rounded-lg border-2 border-green-300 px-4 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
                                 handleReserve(wish.id, listOwnerId);
