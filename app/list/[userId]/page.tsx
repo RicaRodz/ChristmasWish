@@ -1,8 +1,10 @@
 import { createClient } from "@/utils/supabase/server";
-import { createAdminClient } from "@/utils/supabase/admin"; // Import the new admin client
-import { notFound } from "next/navigation";
+import { createAdminClient } from "@/utils/supabase/admin";
+import { notFound, redirect } from "next/navigation";
 import PublicWishList from "@/components/PublicWishList";
+import { Gift, ArrowLeft } from "lucide-react";
 
+// Helper to validate UUIDs
 const isValidUUID = (uuid: string) => {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return regex.test(uuid);
@@ -19,18 +21,30 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
+  const supabase = await createClient();
+
+  // 1. FORCE LOGIN: Redirect if not logged in
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
+
+  if (!currentUser) {
+    // Redirect to login, then return to this list
+    redirect(`/login?next=/list/${userId}`);
+  }
+
+  // 2. Fetch List Owner Details (Admin Client needed for metadata)
   const adminSupabase = createAdminClient();
   const { data: userData } = await adminSupabase.auth.admin.getUserById(userId);
   
   if (!userData?.user) {
-    console.error("User not found or Admin Key missing");
     notFound();
   }
 
-  const supabase = await createClient();
+  // 3. Fetch Wishes
   const { data: wishes, error } = await supabase
     .from("wishes")
-    .select("id, name, link, notes, priority, reserved_by, created_at")
+    .select("id, name, link, notes, priority, reserved_by, reserved_by_id, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -38,59 +52,71 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
-  const {
-    data: { user: currentUser },
-  } = await supabase.auth.getUser();
-
-  const isOwnList = currentUser?.id === userId;
+  // 4. Prepare Data
+  const isOwnList = currentUser.id === userId;
+  const ownerName = userData.user.user_metadata?.full_name || userData.user.email?.split('@')[0] || "Friend";
+  const currentUserName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || "Friend";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900">
-      <nav className="bg-red-700 shadow-lg border-b-4 border-red-800">
+    <div className="min-h-screen relative flex flex-col">
+       {/* BACKGROUND IMAGE */}
+       <div className="fixed inset-0 z-0">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/images/christmas_background.png')" }} 
+        />
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[10px]" />
+      </div>
+
+      {/* NAV */}
+      <nav className="relative z-10 bg-white/5 backdrop-blur-md border-b border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">🎄</span>
-              <h1 className="text-2xl font-bold text-white">Christmas Wishlist</h1>
+            <div className="flex items-center gap-2">
+               <div className="bg-red-600 p-2 rounded-full shadow-lg">
+                  <Gift className="w-5 h-5 text-white" />
+               </div>
+               <span className="text-xl font-bold text-white tracking-tight">
+                WishList
+              </span>
             </div>
-            {!isOwnList && (
-              <a
-                href="/signup"
-                className="rounded-lg bg-white px-4 py-2 text-red-700 font-semibold hover:bg-red-50 transition-colors"
-              >
-                Create Your Own List
-              </a>
-            )}
-            {isOwnList && (
-              <a
-                href="/dashboard"
-                className="rounded-lg bg-white px-4 py-2 text-red-700 font-semibold hover:bg-red-50 transition-colors"
-              >
-                Back to Dashboard
-              </a>
-            )}
+            
+            <a 
+              href="/dashboard"
+              className="flex items-center text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 px-4 py-2 rounded-md transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </a>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Card */}
-        <div className="mb-8 rounded-2xl bg-white/95 backdrop-blur p-8 shadow-2xl border-4 border-red-200 text-center">
-          <h2 className="text-4xl font-bold text-red-800 mb-2 flex items-center justify-center gap-3">
-            <span>🎅</span> 
-            {isOwnList ? "Your" : `${userData.user.email?.split('@')[0] || "Friend"}'s`} Christmas Wishlist
-            <span>🎁</span>
-          </h2>
-          <p className="text-gray-600 text-lg mt-2">
+      {/* CONTENT */}
+      <main className="relative z-10 mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 w-full">
+        {/* Header Section */}
+        <div className="mb-10 text-center text-white">
+          <div className="inline-block bg-red-600/90 text-white px-4 py-1 rounded-full text-sm font-bold tracking-wide uppercase mb-4 shadow-lg border border-red-400">
+             Official Wish List
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 drop-shadow-xl">
+            {isOwnList ? "Your Christmas List" : `${ownerName}'s List`}
+          </h1>
+          <p className="text-blue-100 text-lg max-w-2xl mx-auto">
             {isOwnList 
-              ? "This is how others see your list (reserved items are hidden from you!)" 
-              : "Pick a gift and reserve it so others know you've got it covered!"}
+              ? "This is how your friends see your list. Reserved items are hidden from you." 
+              : `Pick a gift below to reserve it. Don't worry, ${ownerName} won't know it was you!`}
           </p>
         </div>
 
-        {/* Public Wishlist Component */}
-        <PublicWishList wishes={wishes} isOwnList={isOwnList} listOwnerId={userId} />
+        {/* Client Component */}
+        <PublicWishList 
+          wishes={wishes} 
+          isOwnList={isOwnList} 
+          listOwnerId={userId} 
+          currentUserId={currentUser.id}
+          currentUserName={currentUserName}
+        />
       </main>
     </div>
   );

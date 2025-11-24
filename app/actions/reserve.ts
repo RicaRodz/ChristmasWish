@@ -35,19 +35,22 @@ export async function reserveWish(wishId: string, listOwnerId: string) {
 
 export async function unreserveWish(wishId: string, listOwnerId: string) {
   const supabase = await createClient();
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
 
-  // Remove the reservation
+  // Only allow unreserve if the current user IS the reserver
   const { error } = await supabase
     .from("wishes")
     .update({
       reserved_by: null,
+      reserved_by_id: null
     })
-    .eq("id", wishId);
+    .eq("id", wishId)
+    .eq("reserved_by_id", user.id); // Strict Security Check
 
-  if (error) {
-    return { error: error.message };
-  }
+  if (error) return { error: "Could not unreserve." };
 
-  revalidatePath(`/list/${listOwnerId}`);
+  revalidatePath(`/wishlist/${listOwnerId}`);
   return { success: true };
 }
