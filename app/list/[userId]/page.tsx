@@ -19,7 +19,6 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
-  // We need this because the Anon key can't see other users' emails
   const adminSupabase = createAdminClient();
   const { data: userData } = await adminSupabase.auth.admin.getUserById(userId);
   
@@ -28,9 +27,6 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
-  // 2. Use Standard Server Client to fetch WISHES (Data)
-  // We stick to the standard client here to ensure we aren't bypassing 
-  // any Row Level Security policies you might have on the wishes table.
   const supabase = await createClient();
   const { data: wishes, error } = await supabase
     .from("wishes")
@@ -42,7 +38,6 @@ export default async function PublicListPage({ params }: PageProps) {
     notFound();
   }
 
-  // Get current user to check if they're viewing their own list
   const {
     data: { user: currentUser },
   } = await supabase.auth.getUser();
@@ -51,9 +46,6 @@ export default async function PublicListPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900">
-        {/* ... (Rest of your JSX stays exactly the same) ... */}
-        {/* Just make sure you copy the JSX from your previous file */}
-        {/* Navigation */}
       <nav className="bg-red-700 shadow-lg border-b-4 border-red-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">

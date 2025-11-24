@@ -2,20 +2,28 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function reserveWish(wishId: string, reservedBy: string, listOwnerId: string) {
+export async function reserveWish(wishId: string, listOwnerId: string) {
   const supabase = await createClient();
 
-  if (!reservedBy || reservedBy.trim() === "") {
-    return { error: "Please enter your name" };
+  // 1. Get the current logged-in user
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be logged in to reserve items." };
   }
 
-  // Update the wish to mark it as reserved
+  // 2. Get their name from metadata (Fall back to email if name is missing)
+  const userName = user.user_metadata.full_name || user.email;
+
+  // 3. Update the wish
   const { error } = await supabase
     .from("wishes")
     .update({
-      reserved_by: reservedBy.trim(),
+      reserved_by: userName,   // Stores "Santa Claus"
+      reserved_by_id: user.id  // Stores "uuid-1234-5678" (Security)
     })
-    .eq("id", wishId);
+    .eq("id", wishId)
+    .is("reserved_by_id", null); // Safety check
 
   if (error) {
     return { error: error.message };

@@ -1,121 +1,175 @@
-"use client";
-import { signIn } from "@/app/actions/auth";
-import Link from "next/link";
-import { useState } from "react";
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Gift, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  async function handleSubmit(formData: FormData) {
+  const handleSubmit = () => {
     setLoading(true);
     setError(null);
 
-    const result = await signIn(formData);
-
-    if (result?.error) {
-      setError(result.error);
+    // Simulate API call
+    setTimeout(() => {
       setLoading(false);
-    }
-  }
+      // Simulate error for demo
+      // setError("Invalid email or password");
+    }, 1000);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900">
-      {/* Snowflake decorations */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-10 left-10 text-white text-2xl opacity-20">❅</div>
-        <div className="absolute top-20 right-20 text-white text-3xl opacity-30">❆</div>
-        <div className="absolute top-40 left-1/4 text-white text-xl opacity-20">❅</div>
-        <div className="absolute bottom-20 right-1/4 text-white text-2xl opacity-25">❆</div>
-      </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Navigation */}
+      <nav className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Gift className="w-8 h-8 text-red-600" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-red-600 to-green-600 bg-clip-text text-transparent">
+              WishList
+            </span>
+          </div>
+          <Button variant="ghost" className="text-gray-700">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
+      </nav>
 
-      <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex justify-center gap-2 mb-4 text-5xl">
-              <span>🎄</span>
-              <span>🎅</span>
-              <span>🎁</span>
+            <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Gift className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
-              Welcome Back!
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome Back
             </h1>
-            <p className="text-red-100 text-lg">
-              Sign in to manage your Christmas wishlist
+            <p className="text-gray-600">
+              Sign in to access your wishlist
             </p>
           </div>
 
-          {/* Form Card */}
-          <div className="bg-white/95 backdrop-blur rounded-2xl p-8 shadow-2xl border-4 border-red-200">
-            <form action={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="w-full rounded-lg border-2 border-red-200 px-4 py-3 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="w-full rounded-lg border-2 border-red-200 px-4 py-3 text-gray-900 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-200"
-                  placeholder="Enter your password"
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-lg bg-red-100 border-2 border-red-300 p-4 text-red-800">
-                  <p className="font-semibold">⚠️ {error}</p>
+          {/* Login Card */}
+          <Card className="border-2 shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl">Sign In</CardTitle>
+              <CardDescription>
+                Enter your email and password to continue
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-11"
+                  />
                 </div>
-              )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg bg-green-600 px-6 py-4 text-white text-lg font-bold hover:bg-green-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Signing in..." : "🎄 Sign In"}
-              </button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <a href="#" className="text-sm text-red-600 hover:text-red-700 font-medium">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-11"
+                  />
+                </div>
 
-              <div className="text-center pt-4 border-t-2 border-gray-200">
-                <p className="text-gray-700">
-                  Don&apos;t have an account?{" "}
-                  <Link 
-                    href="/signup" 
-                    className="font-bold text-red-600 hover:text-red-700 underline"
-                  >
-                    Sign up here
-                  </Link>
-                </p>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="w-full h-11 bg-red-600 hover:bg-red-700 text-base"
+                >
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full h-11"
+                  onClick={() => {}}
+                >
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  Sign in with Google
+                </Button>
               </div>
-            </form>
-          </div>
 
-          {/* Back to Home */}
-          <div className="text-center mt-6">
-            <Link 
-              href="/" 
-              className="text-white hover:text-red-200 font-semibold underline"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+              <div className="mt-6 text-center text-sm">
+                <span className="text-gray-600">Don&apos;t have an account? </span>
+                <a href="/signup" className="font-semibold text-red-600 hover:text-red-700">
+                  Sign up free
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Footer Text */}
+          <p className="text-center text-sm text-gray-500 mt-6">
+            By signing in, you agree to our{' '}
+            <a href="#" className="text-gray-700 hover:text-gray-900 underline">
+              Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-gray-700 hover:text-gray-900 underline">
+              Privacy Policy
+            </a>
+          </p>
         </div>
       </div>
     </div>
